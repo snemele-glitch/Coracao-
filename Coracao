@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coração Animado Romântico</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: linear-gradient(135deg, #1a001a, #4a0e4e, #1a001a);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            color: #fff;
+            position: relative;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            max-width: 400px;
+            width: 90%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .heart-wrapper {
+            cursor: pointer;
+            position: relative;
+            margin: 20px 0;
+            transition: transform 0.2s ease;
+        }
+        .heart-wrapper:active {
+            transform: scale(0.9);
+        }
+        .heart {
+            width: 100px;
+            height: 90px;
+            position: relative;
+            animation: heartbeat 1.2s infinite ease-in-out;
+            filter: drop-shadow(0 0 20px rgba(255, 75, 110, 0.8));
+        }
+        .heart::before,
+        .heart::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            width: 52px;
+            height: 80px;
+            border-radius: 50px 50px 0 0;
+            background: linear-gradient(135deg, #ff4b6e, #ff1493);
+        }
+        .heart::before {
+            left: 52px;
+            transform: rotate(-45deg);
+            transform-origin: 0 100%;
+        }
+        .heart::after {
+            left: 0;
+            transform: rotate(45deg);
+            transform-origin: 100% 100%;
+        }
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            15% { transform: scale(1.25); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.15); }
+            60% { transform: scale(1); }
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff758c, #ff7eb3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .message-box {
+            min-height: 50px;
+            font-style: italic;
+            margin: 15px 0;
+            font-size: 0.95rem;
+            color: #ffccd5;
+            padding: 0 10px;
+        }
+        .stats {
+            font-size: 0.85rem;
+            color: #b3b3b3;
+            margin-bottom: 15px;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #ff4b6e, #ff1493);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 20, 147, 0.4);
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="container">
+        <h1>Para Alguém Especial</h1>
+        <div class="heart-wrapper" id="heartWrapper">
+            <div class="heart"></div>
+        </div>
+        <div class="stats">Batimentos: <span id="counter">0</span></div>
+        <div class="message-box" id="messageBox">Toca no coração para sentir a magia...</div>
+        <div class="buttons">
+            <button id="msgBtn">Nova Frase</button>
+            <button id="shareBtn">📤 Partilhar</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const particles = [];
+        const bursts = [];
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * width;
+                this.y = height + 20;
+                this.size = Math.random() * 6 + 4;
+                this.speedY = Math.random() * 1.5 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 1;
+                this.opacity = Math.random() * 0.5 + 0.2;
+                this.color = Math.random() > 0.5 ? '#ff4b6e' : '#ff758c';
+            }
+            update() {
+                this.y -= this.speedY;
+                this.x += this.speedX;
+                if (this.y < -20) this.reset();
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                let x = this.x, y = this.y, s = this.size;
+                ctx.moveTo(x, y + s / 4);
+                ctx.bezierCurveTo(x, y, x - s / 2, y - s / 2, x - s, y + s / 4);
+                ctx.bezierCurveTo(x - s, y + s * 0.75, x, y + s * 1.25, x, y + s * 1.5);
+                ctx.bezierCurveTo(x, y + s * 1.25, x + s, y + s * 0.75, x + s, y + s / 4);
+                ctx.bezierCurveTo(x + s, y - s / 2, x, y, x, y + s / 4);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class BurstParticle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 6 + 2;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.02 + 0.015;
+                this.size = Math.random() * 8 + 6;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.1;
+                this.alpha -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = '#ff1493';
+                ctx.beginPath();
+                let x = this.x, y = this.y, s = this.size;
+                ctx.moveTo(x, y + s / 4);
+                ctx.bezierCurveTo(x, y, x - s / 2, y - s / 2, x - s, y + s / 4);
+                ctx.bezierCurveTo(x - s, y + s * 0.75, x, y + s * 1.25, x, y + s * 1.5);
+                ctx.bezierCurveTo(x, y + s * 1.25, x + s, y + s * 0.75, x + s, y + s / 4);
+                ctx.bezierCurveTo(x + s, y - s / 2, x, y, x, y + s / 4);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < 40; i++) particles.push(new Particle());
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            for (let i = bursts.length - 1; i >= 0; i--) {
+                bursts[i].update();
+                bursts[i].draw();
+                if (bursts[i].alpha <= 0) bursts.splice(i, 1);
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        let count = 0;
+        const counterEl = document.getElementById('counter');
+        const heartWrapper = document.getElementById('heartWrapper');
+        const messageBox = document.getElementById('messageBox');
+        const msgBtn = document.getElementById('msgBtn');
+        const shareBtn = document.getElementById('shareBtn');
+
+        const messages = [
+            "O teu sorriso ilumina os meus dias mais escuros. ✨",
+            "Cada batimento do meu coração tem o teu nome. ❤️",
+            "A distância entre nós é apenas um detalhe quando te sinto tão perto. 🌹",
+            "Contigo, todos os dias parecem Dia dos Namorados. 🥰",
+            "És a melhor coisa que me aconteceu na vida. 💫",
+            "O meu lugar favorito no mundo é dentro do teu abraço. 🫂"
+        ];
+
+        heartWrapper.addEventListener('click', (e) => {
+            count++;
+            counterEl.textContent = count;
+            const rect = heartWrapper.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            for (let i = 0; i < 15; i++) {
+                bursts.push(new BurstParticle(x, y));
+            }
+        });
+
+        msgBtn.addEventListener('click', () => {
+            const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+            messageBox.textContent = randomMsg;
+        });
+
+        shareBtn.addEventListener('click', async () => {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Coração Animado',
+                        text: 'Criei algo especial para ti! ❤️',
+                        url: window.location.href,
+                    });
+                } catch (err) {
+                    console.log('Partilha cancelada');
+                }
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copiado para a área de transferência!');
+            }
+        });
+    </script>
+</body>
+</html>
